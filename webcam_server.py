@@ -1,6 +1,7 @@
 import asyncio
 import base64
 import cv2
+import json
 import numpy as np
 import websockets
 
@@ -34,8 +35,11 @@ async def stream_video(websocket):
         # Convert to base64 string
         jpg_as_text = base64.b64encode(buffer).decode('utf-8')
 
-        # Send frame over WebSocket
-        await websocket.send(jpg_as_text)
+        # Wrap the image in a JSON object
+        json_data = json.dumps({"image": jpg_as_text})
+
+        # Send the JSON over WebSocket
+        await websocket.send(json_data)
 
         # ~30 fps
         await asyncio.sleep(0.033)

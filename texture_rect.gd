@@ -103,29 +103,42 @@ func webcam_server_connect() -> void:
 	if result != OK: print("Unable to connect")
 
 
-## Handle WebSocket data recieved.
+## Handle WebSocket data received.
 func _on_websocket_data_received() -> void:
 
 	# Convert UTF-8 encoded array to `String`
-	var base_64_string = socket.get_packet().get_string_from_utf8()
+	var received_data = socket.get_packet().get_string_from_utf8()
+
+	# Create an instance of the JSON class
+	var json_parser = JSON.new()
+
+	# Parse the JSON data
+	var json_data = json_parser.parse(received_data)
+
+	# Check if JSON parsing was successful
+	if json_data != OK:
+		print("Error parsing JSON:", json_parser.get_error_message())
+		return
+
+	# Extract the parsed result
+	var result_data = json_parser.get_data()
+
+	# Extract the Base64 image string from the parsed result
+	var base_64_string = result_data["image"]
 	
-	# Check if there is data to process
-	if base_64_string:
+	# Convert the Base64 string to raw data
+	var raw_data = Marshalls.base64_to_raw(base_64_string)
 
-		# Convert the Base64 string to raw data
-		var raw_data = Marshalls.base64_to_raw(base_64_string)
+	# Create an Image from the raw data
+	var image = Image.new()
 
-		# Create an Image from the raw data
-		var image = Image.new()
+	# Load an image from the binary contents of a JPEG file
+	var result = image.load_jpg_from_buffer(raw_data)
 
-		# Load an image from the binary contents of a JPEG file
-		var result = image.load_jpg_from_buffer(raw_data)
+	# Check if the image loaded from the buffer
+	if !result:
+		# Creates a new `ImageTexture` and initializes it by allocating and setting the data from an `Image`
+		var new_texture = ImageTexture.create_from_image(image)
 
-		# Check if the image loaded from the buffer
-		if !result:
-
-			# Creates a new `ImageTexture` and initializes it by allocating and setting the data from an `Image`
-			var new_texture = ImageTexture.create_from_image(image)
-
-			# Set _this_ node's Texture2D resource
-			texture = new_texture
+		# Set _this_ node's Texture2D resource
+		texture = new_texture
