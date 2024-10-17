@@ -1,0 +1,49 @@
+[gd_scene load_steps=6 format=3 uid="uid://b3kkua0gxwpcd"]
+
+[ext_resource type="Script" path="res://texture_rect.gd" id="1_2oqjj"]
+[ext_resource type="PackedScene" uid="uid://pcn0s8pdat1f" path="res://assets/galaticlake/godotplushie/godou.blend" id="3_kse0i"]
+
+[sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_c2rn7"]
+sky_horizon_color = Color(0.64625, 0.65575, 0.67075, 1)
+ground_horizon_color = Color(0.64625, 0.65575, 0.67075, 1)
+
+[sub_resource type="Sky" id="Sky_qqv0c"]
+sky_material = SubResource("ProceduralSkyMaterial_c2rn7")
+
+[sub_resource type="Environment" id="Environment_sepcy"]
+background_mode = 2
+sky = SubResource("Sky_qqv0c")
+tonemap_mode = 2
+glow_enabled = true
+
+[node name="Node2D" type="Node3D"]
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = SubResource("Environment_sepcy")
+
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
+transform = Transform3D(-0.866023, -0.433016, 0.250001, 0, 0.499998, 0.866027, -0.500003, 0.749999, -0.43301, 0, 0, 0)
+shadow_enabled = true
+
+[node name="Camera3D" type="Camera3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.3, 1)
+
+[node name="CanvasLayer" type="CanvasLayer" parent="Camera3D"]
+
+[node name="TextureRect" type="TextureRect" parent="Camera3D/CanvasLayer"]
+modulate = Color(1, 1, 1, 0.490196)
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -64.0
+offset_top = -64.0
+offset_right = 64.0
+offset_bottom = 64.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_2oqjj")
+
+[node name="GodotPlush" parent="." instance=ExtResource("3_kse0i")]
+transform = Transform3D(0.1, 0, 0, 0, 0.1, 0, 0, 0, 0.1, 0, 0, 0)
