@@ -27,9 +27,9 @@ When you make changes to the Python script, you'll need to tell the Godot applic
 
 ## Packaging the Python Webcam Server for Godot
 [PyInstaller](https://pyinstaller.org/en/stable/) bundles a Python application and all its dependencies into a single package. The user can run the packaged app without installing a Python interpreter or any modules. PyInstaller is tested against Windows, MacOS X, and Linux. However, it is not a cross-compiler; to make a Windows app you run PyInstaller on Windows, and to make a Linux app you run it on Linux. etc. **NOTE:** Whenever you make changes to the Python code, you must regenerate this executable.
-1. Run `pyinstaller --onefile --noconsole webcam_server.py`
+1. Run `pyinstaller webcam_server.spec`
     - This will create a dist folder containing the executable.
-    - The executeable is called in `webcam_server_start()` of [texture_rect.gd](texture_rect.gd)
+    - The executeable is called in [texture_rect.gd](texture_rect.gd) by `webcam_server_start()`
 ----
 
 ## Project Creation (Historical)
