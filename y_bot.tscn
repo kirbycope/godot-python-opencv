@@ -380,7 +380,7 @@ _data = {
 "mixamo_com": SubResource("Animation_c2axd")
 }
 
-[node name="y_bot" type="Node3D"]
+[node name="YBot" type="Node3D"]
 
 [node name="Skeleton3D" type="Skeleton3D" parent="."]
 bones/0/name = "mixamorig_Hips"
