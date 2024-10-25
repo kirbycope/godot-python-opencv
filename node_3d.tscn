@@ -1,7 +1,7 @@
 [gd_scene load_steps=6 format=3 uid="uid://b3kkua0gxwpcd"]
 
 [ext_resource type="Script" path="res://texture_rect.gd" id="1_2oqjj"]
-[ext_resource type="PackedScene" uid="uid://pcn0s8pdat1f" path="res://assets/galaticlake/godotplushie/godou.blend" id="3_kse0i"]
+[ext_resource type="PackedScene" uid="uid://b8t02ei2ypdgm" path="res://y_bot.tscn" id="2_chwll"]
 
 [sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_c2rn7"]
 sky_horizon_color = Color(0.64625, 0.65575, 0.67075, 1)
@@ -26,7 +26,7 @@ transform = Transform3D(-0.866023, -0.433016, 0.250001, 0, 0.499998, 0.866027, -
 shadow_enabled = true
 
 [node name="Camera3D" type="Camera3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.3, 1)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.7, 0.6)
 
 [node name="CanvasLayer" type="CanvasLayer" parent="Camera3D"]
 
@@ -45,5 +45,4 @@ grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("1_2oqjj")
 
-[node name="GodotPlush" parent="." instance=ExtResource("3_kse0i")]
-transform = Transform3D(0.1, 0, 0, 0, 0.1, 0, 0, 0, 0.1, 0, 0, 0)
+[node name="y_bot" parent="." instance=ExtResource("2_chwll")]

@@ -5,7 +5,11 @@ a = Analysis(
     ['webcam_server.py'],
     pathex=[],
     binaries=[],
-    datas=[('venv/Lib/site-packages/cv2/data/haarcascade_frontalface_default.xml', 'cv2/data')],
+    datas=[
+        ('venv/Lib/site-packages/mediapipe/modules/pose_landmark/pose_landmark_cpu.binarypb', 'mediapipe/modules/pose_landmark'),
+        ('venv/Lib/site-packages/mediapipe/modules/pose_detection/pose_detection.tflite', 'mediapipe/modules/pose_detection'),
+        ('venv/Lib/site-packages/mediapipe/modules/pose_landmark/pose_landmark_full.tflite', 'mediapipe/modules/pose_landmark'),
+    ],
     hiddenimports=[],
     hookspath=[],
     hooksconfig={},

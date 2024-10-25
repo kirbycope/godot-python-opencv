@@ -1,13 +1,25 @@
 extends TextureRect
 
+var bone_map = {
+	0: "mixamorig_Head", # Nose
+	11: "mixamorig_LeftArm", # Left Shoulder
+	12: "mixamorig_RightArm", # Right Shoulder
+	13: "mixamorig_LeftForeArm", # Left Elbow
+	14: "mixamorig_RightForeArm", # Right Elbow
+	15: "mixamorig_LeftHand", # Left Wrist
+	16: "mixamorig_RightHand", # Right Wrist
+}
+@onready var camera: Camera3D = $"../../../Camera3D"
+@onready var model: Node3D = $"../../../YBot"
+@onready var skeleton: Skeleton3D = $"../../../YBot/Skeleton3D"
 var socket: WebSocketPeer = WebSocketPeer.new()
-var socket_url = "ws://localhost:8765"
+var socket_url: String = "ws://localhost:8765"
 
 
-## Called when the object receives a notification, which can be identified in `param what` by comparing it with a constant. See also `notification`.
+## Called when the object receives a notification, which can be identified in `param what` by comparing it with a constant.
 func _notification(what) -> void:
 
-	# Check if notifcation is a "close request"
+	# Check if notification is a "close request"
 	if what == NOTIFICATION_WM_CLOSE_REQUEST:
 
 		# Stop the webcam server
@@ -75,7 +87,7 @@ func webcam_server_stop() -> void:
 	var os_name = OS.get_name()
 
 	# Check if the operating system is Windows
-	if os_name== "Windows":
+	if os_name == "Windows":
 
 		# Use `taskkill` with the application name
 		var args = ["taskkill", "/IM", "webcam_server.exe", "/F"]
@@ -83,8 +95,8 @@ func webcam_server_stop() -> void:
 		# Execute the given process in a blocking way
 		OS.execute("cmd", ["/c"] + args)
 
-	# Check if the current opersing system is Unix-based
-	elif os_name == "X11" or OS.get_name() == "OSX":
+	# Check if the current operating system is Unix-based
+	elif os_name == "X11" or os_name == "OSX":
 
 		# Use `pkill` with the application name
 		var args = ["pkill", "webcam_server"]
@@ -105,10 +117,13 @@ func webcam_server_connect() -> void:
 
 ## Handle WebSocket data received.
 func _on_websocket_data_received() -> void:
+
 	# Convert UTF-8 encoded array to `String`
 	var received_data = socket.get_packet().get_string_from_utf8()
+
 	# Create an instance of the JSON class
 	var json_parser = JSON.new()
+
 	# Parse the JSON data
 	var json_data = json_parser.parse(received_data)
 
@@ -119,32 +134,6 @@ func _on_websocket_data_received() -> void:
 
 	# Extract the parsed result
 	var result_data = json_parser.get_data()
-
-	# Extract and print face coordinates
-	var faces = result_data["faces"]
-	var image_center_x = 320
-	var image_center_y = 240
-	
-	# Get the GodotPlush node
-	var plush = get_node("../../../GodotPlush")  # Adjust the path if necessary
-	
-	if faces.size() > 0:
-		var face = faces[0]  # Only consider the first detected face
-		var x = face["x"]
-		var y = face["y"]
-		var width = face["w"]
-		var height = face["h"]
-		
-		# Calculate offsets from the center
-		var offset_x = x + (width / 2) - image_center_x  # Horizontal offset from center
-		var offset_y = y + (height / 2) - image_center_y  # Vertical offset from center
-
-		# Move the plush based on the offsets, scaling the movement correctly
-		plush.position = Vector3(offset_x * 0.002, (-offset_y * 0.002)+0.08, 0.0)  # Invert Y for upward movement
-
-	else:
-		# If no faces are detected, return to the original position
-		plush.position = Vector3(0.0, 0.0, 0.0)  # Reset to the original position
 
 	# Extract the Base64 image string from the parsed result
 	var base_64_string = result_data["image"]
@@ -165,3 +154,57 @@ func _on_websocket_data_received() -> void:
 
 		# Set _this_ node's Texture2D resource
 		texture = new_texture
+
+	# Handle the landmarks (received_data["landmarks"])
+	if "landmarks" in result_data:
+		var landmarks = result_data["landmarks"]
+		update_model_bones(landmarks)
+
+
+## Function to update the rigged model's bones
+func update_model_bones(landmarks):
+
+	# Loop through each landmark and update the corresponding bone
+	for i in range(landmarks.size()):
+
+		# Check if this landmark is mapped to a bone
+		if bone_map.has(i) and bone_map[i] != "":
+
+			# Get the bone's name
+			var bone_name = bone_map[i]
+
+			# Get the bone's index
+			var bone_idx: int = skeleton.find_bone(bone_name)
+
+			# Get the bone's current pose data
+			var current_pose = skeleton.get_bone_global_pose(bone_idx)
+
+			# Update the landmark values to a 3D position
+			var landmark_position: Vector3 = update_landmark_to_3d(landmarks[i])
+
+			# Apply the new pose
+			var new_pose: Transform3D = Transform3D(current_pose.basis, landmark_position)
+			skeleton.set_bone_global_pose(bone_idx, new_pose)
+
+
+func update_landmark_to_3d(landmark) -> Vector3:
+
+	# Convert the JSON data to a Vector3
+	var landmark_position = Vector3(landmark["x"], landmark["y"],landmark["z"])
+
+	# Convert from 2D position to screen coordinates
+	var screen_x = landmark_position.x * get_viewport().size.x
+	var screen_y = landmark_position.y * get_viewport().size.y
+
+	# Now convert to a 3D position (project ray from 2D into 3D)
+	var ray_origin = camera.project_ray_origin(Vector2(screen_x, screen_y))
+	var ray_direction = camera.project_ray_normal(Vector2(screen_x, screen_y))
+
+	# Define a Z-depth (distance from the camera) where you'd like to place the object in 3D
+	var depth = 0.7 # Should match the Camera's Z-index
+
+	# Use the ray to find the 3D position at a given depth
+	var landmark_position_3d = ray_origin + ray_direction * depth
+
+	# Return the landmark's position
+	return landmark_position_3d

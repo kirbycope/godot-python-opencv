@@ -4,9 +4,11 @@ import cv2
 import json
 import numpy as np
 import websockets
+import mediapipe as mp
 
-# Load pre-trained Haar Cascade for face detection
-face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
+# Initialize MediaPipe pose
+mp_pose = mp.solutions.pose
+pose = mp_pose.Pose()
 
 async def stream_video(websocket):
 
@@ -28,21 +30,8 @@ async def stream_video(websocket):
         # Flip the frame horizontally (left-right)
         frame = cv2.flip(frame, 1)
 
-        # Convert the frame to grayscale for face detection
-        gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-
-        # Detect faces in the frame
-        faces = face_cascade.detectMultiScale(gray, scaleFactor=1.3, minNeighbors=5, minSize=(30, 30))
-
-        # Draw rectangles around the detected faces
-        for (x, y, w, h) in faces:
-            cv2.rectangle(frame, (x, y), (x+w, y+h), (255, 0, 0), 2)
-
         # Resize frame to reduce size (optional)
         frame = cv2.resize(frame, (640, 480))
-
-        # Encode frame as JPEG
-        _, buffer = cv2.imencode('.jpg', frame)
 
         # Encode frame as JPEG with lower quality (0-100)
         _, buffer = cv2.imencode('.jpg', frame, [int(cv2.IMWRITE_JPEG_QUALITY), 50])
@@ -50,13 +39,23 @@ async def stream_video(websocket):
         # Convert to base64 string
         jpg_as_text = base64.b64encode(buffer).decode('utf-8')
 
-        # Convert face coordinates to list
-        faces_list = [{"x": int(x), "y": int(y), "w": int(w), "h": int(h)} for (x, y, w, h) in faces]
+        # Perform pose detection
+        image_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+        results = pose.process(image_rgb)
 
-        # Wrap the image and face data in a JSON object
+        landmarks = []
+        if results.pose_landmarks:
+            for landmark in results.pose_landmarks.landmark:
+                landmarks.append({
+                    'x': landmark.x,
+                    'y': landmark.y,
+                    'z': landmark.z
+                })
+
+        # Wrap the image and pose data in a JSON object
         json_data = json.dumps({
             "image": jpg_as_text,
-            "faces": faces_list
+            "landmarks": landmarks
         })
 
         # Send the JSON over WebSocket
