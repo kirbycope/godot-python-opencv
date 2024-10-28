@@ -156,11 +156,11 @@ func _on_websocket_data_received() -> void:
 
 	# Point the shoulder(s) at the elbow(s)
 	update_model_bone_rotation(landmarks, 11, 13)
-	#update_model_bone_rotation(landmarks, 12, 14)
+	update_model_bone_rotation(landmarks, 12, 14)
 
 	# Point the elbow(s) at the wrist(s)
-	#update_model_bone_rotation(landmarks, 13, 15)
-	#update_model_bone_rotation(landmarks, 14, 16)
+	update_model_bone_rotation(landmarks, 13, 15)
+	update_model_bone_rotation(landmarks, 14, 16)
 
 
 ## Translates the landmark coodinates into a Vector3. 
@@ -177,8 +177,8 @@ func landmark_to_vector3(landmark) -> Vector3:
 	var ray_origin = camera.project_ray_origin(Vector2(screen_x, screen_y))
 	var ray_direction = camera.project_ray_normal(Vector2(screen_x, screen_y))
 
-	# Define a Z-depth (distance from the camera) where you'd like to place the object in 3D
-	var depth = 0.7 # Should match the Camera's Z-index
+	# Define a Z-depth (distance from the camera)
+	var depth = (landmark_position.z * .05) + camera.position.z
 
 	# Use the ray to find the 3D position at a given depth
 	var landmark_position_3d = ray_origin + ray_direction * depth
@@ -202,7 +202,7 @@ func update_model_bone_positions(landmarks):
 			# Get the bone's index
 			var bone_idx: int = skeleton.find_bone(bone_name)
 
-			# Get the bone's current pose data
+			# Get the bone's current pose
 			var current_pose = skeleton.get_bone_global_pose(bone_idx)
 
 			# Update the landmark values to a 3D position
@@ -218,35 +218,18 @@ func update_model_bone_positions(landmarks):
 ## Updates the landmark at `start_idx` and rotates it towards the landmark at `end_idx`.
 func update_model_bone_rotation(landmarks, start_idx, end_idx):
 
-	# Get the bone's name
+	# Get the start bone's name
 	var bone_name = bone_map[start_idx]
 
-	# Get the bone's index
+	# Get the start bone's index
 	var bone_idx: int = skeleton.find_bone(bone_name)
 
-	# Get the bone's current pose data
+	# Get the start bone's current pose
 	var current_pose = skeleton.get_bone_global_pose(bone_idx)
 
 	# Update the landmark values to a 3D position
 	var start_pos = landmark_to_vector3(landmarks[start_idx])
 	var end_pos = landmark_to_vector3(landmarks[end_idx])
-
-	# Calculate the direction vector from start_pos to end_pos
-	var thing1 = Vector2(start_pos.x, start_pos.y)
-	var thing2 = Vector2(end_pos.x, end_pos.y)
-	print(thing2 - thing1)
-
-	# Apply a rotation around the X-axis
-	#current_pose.basis = current_pose.basis.rotated(Vector3.RIGHT, deg_to_rad(6))
-
-	# Apply a rotation around the Y-axis
-	#current_pose.basis = current_pose.basis.rotated(Vector3.UP, deg_to_rad(6))
-
-	# ToDo: This needs to "point" towards the position of `end_idx`.
-	var rotation_amount = deg_to_rad(0)
-
-	# Apply a rotation around the Z-axis
-	current_pose.basis = current_pose.basis.rotated(Vector3.FORWARD, rotation_amount)
 
 	# Define the new pose
 	var new_pose: Transform3D = Transform3D(current_pose.basis, current_pose.origin)
