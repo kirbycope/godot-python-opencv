@@ -119,21 +119,16 @@ func webcam_server_connect() -> void:
 func _on_websocket_data_received() -> void:
 
 	# Convert UTF-8 encoded array to `String`
-	var received_data = socket.get_packet().get_string_from_utf8()
+	var data_received = socket.get_packet().get_string_from_utf8()
 
-	# Create an instance of the JSON class
-	var json_parser = JSON.new()
+	# Create an instance of and initialize the JSON class
+	var json = JSON.new()
 
-	# Parse the JSON data
-	var json_data = json_parser.parse(received_data)
-
-	# Check if JSON parsing was successful
-	if json_data != OK:
-		print("Error parsing JSON:", json_parser.get_error_message())
-		return
+	# Parse the JSON provided
+	json.parse(data_received)
 
 	# Extract the parsed result
-	var result_data = json_parser.get_data()
+	var result_data = json.get_data()
 
 	# Extract the Base64 image string from the parsed result
 	var base_64_string = result_data["image"]
@@ -145,49 +140,31 @@ func _on_websocket_data_received() -> void:
 	var image = Image.new()
 
 	# Load an image from the binary contents of a JPEG file
-	var result = image.load_jpg_from_buffer(raw_data)
+	image.load_jpg_from_buffer(raw_data)
 
-	# Check if the image loaded from the buffer
-	if !result:
-		# Creates a new `ImageTexture` and initializes it by allocating and setting the data from an `Image`
-		var new_texture = ImageTexture.create_from_image(image)
+	# Creates a new `ImageTexture` and initializes it by allocating and setting the data from an `Image`
+	var new_texture = ImageTexture.create_from_image(image)
 
-		# Set _this_ node's Texture2D resource
-		texture = new_texture
+	# Set _this_ node's Texture2D resource
+	texture = new_texture
 
-	# Handle the landmarks (received_data["landmarks"])
-	if "landmarks" in result_data:
-		var landmarks = result_data["landmarks"]
-		update_model_bones(landmarks)
+	# Get the "landmarks" from the json data
+	var landmarks = result_data["landmarks"]
 
+	# Update each of the model bone's positons
+	update_model_bone_positions(landmarks)
 
-## Function to update the rigged model's bones
-func update_model_bones(landmarks):
+	# Point the shoulder(s) at the elbow(s)
+	update_model_bone_rotation(landmarks, 11, 13)
+	#update_model_bone_rotation(landmarks, 12, 14)
 
-	# Loop through each landmark and update the corresponding bone
-	for i in range(landmarks.size()):
-
-		# Check if this landmark is mapped to a bone
-		if bone_map.has(i) and bone_map[i] != "":
-
-			# Get the bone's name
-			var bone_name = bone_map[i]
-
-			# Get the bone's index
-			var bone_idx: int = skeleton.find_bone(bone_name)
-
-			# Get the bone's current pose data
-			var current_pose = skeleton.get_bone_global_pose(bone_idx)
-
-			# Update the landmark values to a 3D position
-			var landmark_position: Vector3 = update_landmark_to_3d(landmarks[i])
-
-			# Apply the new pose
-			var new_pose: Transform3D = Transform3D(current_pose.basis, landmark_position)
-			skeleton.set_bone_global_pose(bone_idx, new_pose)
+	# Point the elbow(s) at the wrist(s)
+	#update_model_bone_rotation(landmarks, 13, 15)
+	#update_model_bone_rotation(landmarks, 14, 16)
 
 
-func update_landmark_to_3d(landmark) -> Vector3:
+## Translates the landmark coodinates into a Vector3. 
+func landmark_to_vector3(landmark) -> Vector3:
 
 	# Convert the JSON data to a Vector3
 	var landmark_position = Vector3(landmark["x"], landmark["y"],landmark["z"])
@@ -208,3 +185,71 @@ func update_landmark_to_3d(landmark) -> Vector3:
 
 	# Return the landmark's position
 	return landmark_position_3d
+
+
+## Function to update the rigged model's bones.
+func update_model_bone_positions(landmarks):
+
+	# Loop through each landmark and update the corresponding bone
+	for i in range(landmarks.size()):
+
+		# Check if this landmark is mapped to a bone
+		if bone_map.has(i) and bone_map[i] != "":
+
+			# Get the bone's name
+			var bone_name = bone_map[i]
+
+			# Get the bone's index
+			var bone_idx: int = skeleton.find_bone(bone_name)
+
+			# Get the bone's current pose data
+			var current_pose = skeleton.get_bone_global_pose(bone_idx)
+
+			# Update the landmark values to a 3D position
+			var landmark_position: Vector3 = landmark_to_vector3(landmarks[i])
+
+			# Define the new pose
+			var new_pose: Transform3D = Transform3D(current_pose.basis, landmark_position)
+
+			# Apply the new pose
+			skeleton.set_bone_global_pose(bone_idx, new_pose)
+
+
+## Updates the landmark at `start_idx` and rotates it towards the landmark at `end_idx`.
+func update_model_bone_rotation(landmarks, start_idx, end_idx):
+
+	# Get the bone's name
+	var bone_name = bone_map[start_idx]
+
+	# Get the bone's index
+	var bone_idx: int = skeleton.find_bone(bone_name)
+
+	# Get the bone's current pose data
+	var current_pose = skeleton.get_bone_global_pose(bone_idx)
+
+	# Update the landmark values to a 3D position
+	var start_pos = landmark_to_vector3(landmarks[start_idx])
+	var end_pos = landmark_to_vector3(landmarks[end_idx])
+
+	# Calculate the direction vector from start_pos to end_pos
+	var thing1 = Vector2(start_pos.x, start_pos.y)
+	var thing2 = Vector2(end_pos.x, end_pos.y)
+	print(thing2 - thing1)
+
+	# Apply a rotation around the X-axis
+	#current_pose.basis = current_pose.basis.rotated(Vector3.RIGHT, deg_to_rad(6))
+
+	# Apply a rotation around the Y-axis
+	#current_pose.basis = current_pose.basis.rotated(Vector3.UP, deg_to_rad(6))
+
+	# ToDo: This needs to "point" towards the position of `end_idx`.
+	var rotation_amount = deg_to_rad(0)
+
+	# Apply a rotation around the Z-axis
+	current_pose.basis = current_pose.basis.rotated(Vector3.FORWARD, rotation_amount)
+
+	# Define the new pose
+	var new_pose: Transform3D = Transform3D(current_pose.basis, current_pose.origin)
+
+	# Apply the new pose to the skeleton
+	skeleton.set_bone_global_pose(bone_idx, new_pose)
