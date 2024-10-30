@@ -6,8 +6,9 @@ import numpy as np
 import websockets
 import mediapipe as mp
 
-# Initialize MediaPipe pose
+# Initialize MediaPipe pose and drawing utils
 mp_pose = mp.solutions.pose
+mp_drawing = mp.solutions.drawing_utils
 pose = mp_pose.Pose()
 
 async def stream_video(websocket):
@@ -33,16 +34,27 @@ async def stream_video(websocket):
         # Resize frame to reduce size (optional)
         frame = cv2.resize(frame, (640, 480))
 
+        # Perform pose detection
+        image_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+        results = pose.process(image_rgb)
+
+        # Draw pose landmarks on the frame if detected
+        if results.pose_landmarks:
+            mp_drawing.draw_landmarks(
+                frame,
+                results.pose_landmarks,
+                mp_pose.POSE_CONNECTIONS,
+                mp_drawing.DrawingSpec(color=(0, 255, 0), thickness=2, circle_radius=2),
+                mp_drawing.DrawingSpec(color=(0, 0, 255), thickness=2, circle_radius=2)
+            )
+
         # Encode frame as JPEG with lower quality (0-100)
         _, buffer = cv2.imencode('.jpg', frame, [int(cv2.IMWRITE_JPEG_QUALITY), 50])
         
         # Convert to base64 string
         jpg_as_text = base64.b64encode(buffer).decode('utf-8')
 
-        # Perform pose detection
-        image_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-        results = pose.process(image_rgb)
-
+        # Prepare landmarks for JSON if detected
         landmarks = []
         if results.pose_landmarks:
             for landmark in results.pose_landmarks.landmark:
