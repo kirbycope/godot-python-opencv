@@ -154,14 +154,6 @@ func _on_websocket_data_received() -> void:
 	# Update each of the model bone's positons
 	update_model_bone_positions(landmarks)
 
-	# Point the shoulder(s) at the elbow(s)
-	update_model_bone_rotation(landmarks, 11, 13)
-	update_model_bone_rotation(landmarks, 12, 14)
-
-	# Point the elbow(s) at the wrist(s)
-	update_model_bone_rotation(landmarks, 13, 15)
-	update_model_bone_rotation(landmarks, 14, 16)
-
 
 ## Translates the landmark coodinates into a Vector3. 
 func landmark_to_vector3(landmark) -> Vector3:
@@ -213,26 +205,16 @@ func update_model_bone_positions(landmarks):
 
 			# Apply the new pose
 			skeleton.set_bone_global_pose(bone_idx, new_pose)
-
-
-## Updates the landmark at `start_idx` and rotates it towards the landmark at `end_idx`.
-func update_model_bone_rotation(landmarks, start_idx, end_idx):
-
-	# Get the start bone's name
-	var bone_name = bone_map[start_idx]
-
-	# Get the start bone's index
-	var bone_idx: int = skeleton.find_bone(bone_name)
-
-	# Get the start bone's current pose
-	var current_pose = skeleton.get_bone_global_pose(bone_idx)
-
-	# Update the landmark values to a 3D position
-	var start_pos = landmark_to_vector3(landmarks[start_idx])
-	var end_pos = landmark_to_vector3(landmarks[end_idx])
-
-	# Define the new pose
-	var new_pose: Transform3D = Transform3D(current_pose.basis, current_pose.origin)
-
-	# Apply the new pose to the skeleton
-	skeleton.set_bone_global_pose(bone_idx, new_pose)
+	
+	# Set "mixammo_Spine2" to the midpoint of the shoulders
+	var left_shoulder_idx = bone_map.keys().find(11)
+	var right_shoulder_idx = bone_map.keys().find(12)
+	if left_shoulder_idx != -1 and right_shoulder_idx != -1:
+		var left_shoulder_pos = landmark_to_vector3(landmarks[left_shoulder_idx])
+		var right_shoulder_pos = landmark_to_vector3(landmarks[right_shoulder_idx])
+		var midpoint = (left_shoulder_pos + right_shoulder_pos) * .4
+		var spine_bone_idx = skeleton.find_bone("mixamorig_Spine2")
+		if spine_bone_idx != -1:
+			var spine_current_pose = skeleton.get_bone_global_pose(spine_bone_idx)
+			var spine_new_pose = Transform3D(spine_current_pose.basis, midpoint)
+			skeleton.set_bone_global_pose(spine_bone_idx, spine_new_pose)
