@@ -2,7 +2,6 @@ import asyncio
 import base64
 import cv2
 import json
-import numpy as np
 import websockets
 
 # Load pre-trained Haar Cascade for face detection

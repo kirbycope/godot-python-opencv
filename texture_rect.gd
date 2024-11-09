@@ -105,10 +105,13 @@ func webcam_server_connect() -> void:
 
 ## Handle WebSocket data received.
 func _on_websocket_data_received() -> void:
+
 	# Convert UTF-8 encoded array to `String`
 	var received_data = socket.get_packet().get_string_from_utf8()
+
 	# Create an instance of the JSON class
 	var json_parser = JSON.new()
+
 	# Parse the JSON data
 	var json_data = json_parser.parse(received_data)
 
@@ -120,31 +123,34 @@ func _on_websocket_data_received() -> void:
 	# Extract the parsed result
 	var result_data = json_parser.get_data()
 
-	# Extract and print face coordinates
+	# Extract face coordinates
 	var faces = result_data["faces"]
-	var image_center_x = 320
-	var image_center_y = 240
 	
 	# Get the GodotPlush node
-	var plush = get_node("../../../GodotPlush")  # Adjust the path if necessary
+	var plush = get_node("../../../GodotPlush")
 	
+	# Handle faces found
 	if faces.size() > 0:
-		var face = faces[0]  # Only consider the first detected face
+
+		# Only consider the first detected face
+		var face = faces[0]
 		var x = face["x"]
 		var y = face["y"]
 		var width = face["w"]
 		var height = face["h"]
 		
 		# Calculate offsets from the center
-		var offset_x = x + (width / 2) - image_center_x  # Horizontal offset from center
-		var offset_y = y + (height / 2) - image_center_y  # Vertical offset from center
+		var image_center_x = 320
+		var image_center_y = 240
+		var offset_x = x + (width / 2) - image_center_x
+		var offset_y = y + (height / 2) - image_center_y
 
 		# Move the plush based on the offsets, scaling the movement correctly
 		plush.position = Vector3(offset_x * 0.002, (-offset_y * 0.002)+0.08, 0.0)  # Invert Y for upward movement
 
 	else:
 		# If no faces are detected, return to the original position
-		plush.position = Vector3(0.0, 0.0, 0.0)  # Reset to the original position
+		plush.position = Vector3(0.0, 0.0, 0.0)
 
 	# Extract the Base64 image string from the parsed result
 	var base_64_string = result_data["image"]
@@ -160,6 +166,7 @@ func _on_websocket_data_received() -> void:
 
 	# Check if the image loaded from the buffer
 	if !result:
+
 		# Creates a new `ImageTexture` and initializes it by allocating and setting the data from an `Image`
 		var new_texture = ImageTexture.create_from_image(image)
 
