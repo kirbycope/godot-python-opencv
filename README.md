@@ -41,8 +41,8 @@ When you make changes to the Python script, you'll need to tell the Godot applic
 1. To create a [virtual environment](https://docs.python.org/3/library/venv.html), run `python -m venv venv`
     1. This creates a folder called "venv" that contains a local copy of Python and its package manager, "pip".
 1. To activate the virtual environment, run
-    - [macOS] `source venv/bin/activate`
-    - [Windows] `venv\Scripts\activate`
+    - [macOS] `source .venv/bin/activate`
+    - [Windows] `.venv\Scripts\activate`
 1. To install required packages, run `pip install opencv-python websockets numpy pyinstaller`
 1. Verify package installation by running `pip list`
 1. To exit the venv, run `deactivate`
