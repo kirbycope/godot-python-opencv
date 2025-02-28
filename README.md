@@ -1,7 +1,7 @@
 ![Godot Python OpenCV](godot-python-opencv.png)
 
 # godot-python-opencv
-Use Godot, OpenCV, and PyInstaller to display the webcam video in a Godot Scene.
+Use OpenCV and Python to display the webcam video in a Godot Scene.
 
 ## Technologies Used
 [Godot](https://godotengine.org/) is a cross-platform, free and open-source game engine released under the permissive MIT license. </br>
